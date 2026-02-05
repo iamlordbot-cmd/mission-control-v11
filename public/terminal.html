@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Control V11 - Lord Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: rgba(20, 20, 30, 0.8);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #8b5cf6;
+      --accent2: #06b6d4;
+      --good: #22c55e;
+      --warn: #eab308;
+      --bad: #ef4444;
+      --fg: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    header { margin-bottom: 32px; }
+    .logo { font-size: 12px; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; }
+    h1 { font-size: 32px; font-weight: 600; margin-top: 8px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-top: 8px; }
+    .live-dot {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      padding: 8px 16px; border-radius: 9999px; font-size: 12px;
+    }
+    .pulse { width: 8px; height: 8px; background: var(--good); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+    
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+      backdrop-filter: blur(12px);
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .card-subtitle { font-size: 11px; color: var(--muted); }
+    
+    /* TERMINAL */
+    .terminal {
+      background: #0d0d12;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .terminal-header {
+      display: flex; gap: 6px; margin-bottom: 12px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot.red { background: #ff5f56; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #27ca40; }
+    .terminal-line { padding: 4px 0; color: var(--muted); line-height: 1.6; }
+    .terminal-line .time { color: var(--accent2); }
+    .terminal-line .emoji { margin-right: 4px; }
+    
+    /* TASK */
+    .task-current {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.1));
+      border: 1px solid var(--accent);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .task-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .task-value { font-size: 18px; font-weight: 600; margin-top: 8px; }
+    
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .stat-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); }
+    .stat-value { font-size: 24px; font-weight: 600; margin-top: 4px; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    
+    /* LIST */
+    .list-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .list-item:last-child { margin-bottom: 0; }
+    .list-name { font-size: 13px; font-weight: 500; }
+    .list-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.good { background: var(--good); }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--bad); }
+    
+    .timestamp { font-size: 11px; color: var(--muted); margin-top: 24px; text-align: center; }
+    
+    /* Full width terminal */
+    .terminal-card { grid-column: 1 / -1; }
+    
+    .scroll-area { max-height: 200px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">Mission Control • V11</div>
+      <h1>👑 Lord Terminal</h1>
+      <p class="subtitle">Real-time activity stream • Supabase sync every 30s</p>
+      <div style="margin-top: 16px;">
+        <span class="live-dot"><span class="pulse"></span> Live telemetry</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- TERMINAL ACTIVITY -->
+      <div class="card terminal-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🖥️ Activity Terminal</div>
+            <div class="card-subtitle">Real-time thought process</div>
+          </div>
+        </div>
+        <div class="terminal">
+          <div class="terminal-header">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+          </div>
+          <div id="terminal-lines">
+            <div class="terminal-line">[--:--:--] Connecting to Supabase...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURRENT TASK -->
+      <div class="card">
+        <div class="task-current">
+          <div class="task-label">🎯 Current Task</div>
+          <div class="task-value" id="current-task">Loading...</div>
+        </div>
+      </div>
+
+      <!-- HEALTH -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔋 System Health</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">CPU Load</div>
+            <div class="stat-value" id="cpu-load">--</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">RAM</div>
+            <div class="stat-value" id="ram-percent">--%</div>
+            <div class="stat-sub" id="ram-detail">-- / -- GB</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Disk</div>
+            <div class="stat-value" id="disk-percent">--%</div>
+            <div class="stat-sub" id="disk-detail">-- / --</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Uptime</div>
+            <div class="stat-value" id="uptime" style="font-size: 14px;">--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONNECTIONS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔗 Connections</div>
+          <div class="card-subtitle" id="conn-count">-- connected</div>
+        </div>
+        <div class="scroll-area" id="connections-list"></div>
+      </div>
+
+      <!-- SKILLS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧠 Skills</div>
+          <div class="card-subtitle" id="skills-count">-- installed</div>
+        </div>
+        <div class="scroll-area" id="skills-list"></div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Projects</div>
+        </div>
+        <div class="scroll-area" id="projects-list"></div>
+      </div>
+    </div>
+
+    <div class="timestamp">Last sync: <span id="last-sync">--</span></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://whupmuknukpkggspxdpd.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodXBtdWtudWtwa2dnc3B4ZHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMzU1MzUsImV4cCI6MjA4NTgxMTUzNX0.LgYJnxrGT6n9E5HKyrJcgxpqgb-zmmJHWsWYZqKZqYw';
+
+    async function fetchData() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard_stats?id=eq.1&select=data,updated_at`, {
+          headers: { 'apikey': SUPABASE_KEY }
+        });
+        const json = await res.json();
+        if (json[0]) {
+          updateDashboard(json[0].data, json[0].updated_at);
+        }
+      } catch (e) {
+        console.error('Fetch error:', e);
+      }
+    }
+
+    function updateDashboard(data, updatedAt) {
+      // Terminal
+      if (data.activity_log?.lines) {
+        const container = document.getElementById('terminal-lines');
+        container.innerHTML = data.activity_log.lines.map(line => {
+          const match = line.match(/\[([^\]]+)\]\s*(.*)/);
+          if (match) {
+            return `<div class="terminal-line"><span class="time">[${match[1]}]</span> ${match[2]}</div>`;
+          }
+          return `<div class="terminal-line">${line}</div>`;
+        }).join('');
+        container.scrollTop = container.scrollHeight;
+      }
+
+      // Task
+      document.getElementById('current-task').textContent = data.lord_task || 'Standby';
+
+      // Health
+      if (data.health) {
+        document.getElementById('cpu-load').textContent = data.health.cpu_load ?? '--';
+        document.getElementById('ram-percent').textContent = `${data.health.ram_percent ?? '--'}%`;
+        document.getElementById('ram-detail').textContent = `${data.health.ram_used_gb ?? '--'} / ${data.health.ram_total_gb ?? '--'} GB`;
+        document.getElementById('disk-percent').textContent = `${data.health.disk_percent ?? '--'}%`;
+        document.getElementById('disk-detail').textContent = `${data.health.disk_used ?? '--'} / ${data.health.disk_total ?? '--'}`;
+        document.getElementById('uptime').textContent = data.health.uptime || '--';
+      }
+
+      // Connections
+      if (data.connections) {
+        const connected = data.connections.connections.filter(c => c.status === 'connected').length;
+        document.getElementById('conn-count').textContent = `${connected}/${data.connections.total} connected`;
+        document.getElementById('connections-list').innerHTML = data.connections.connections.map(c => `
+          <div class="list-item">
+            <div class="list-name">${c.name}</div>
+            <div class="dot ${c.status === 'connected' ? 'good' : 'bad'}"></div>
+          </div>
+        `).join('');
+      }
+
+      // Skills
+      if (data.skills) {
+        document.getElementById('skills-count').textContent = `${data.skills.count} installed`;
+        document.getElementById('skills-list').innerHTML = data.skills.installed.slice(0, 6).map(s => `
+          <div class="list-item">
+            <div>
+              <div class="list-name">${s.name}</div>
+              <div class="list-desc">${(s.description || '').substring(0, 50)}...</div>
+            </div>
+            <div class="dot good"></div>
+          </div>
+        `).join('');
+      }
+
+      // Projects
+      if (data.projects) {
+        document.getElementById('projects-list').innerHTML = data.projects.projects.map(p => `
+          <div class="list-item">
+            <div>
+              <div class="list-name">${p.name}</div>
+              <div class="list-desc">Status: ${p.status}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 14px; font-weight: 600;">${p.progress}%</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Timestamp
+      document.getElementById('last-sync').textContent = new Date(updatedAt).toLocaleTimeString();
+    }
+
+    // Initial fetch
+    fetchData();
+    // Auto-refresh every 10s
+    setInterval(fetchData, 10000);
+  </script>
+</body>
+</html>
